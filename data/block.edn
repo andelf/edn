@@ -1,0 +1,11 @@
+{:block/uuid #uuid "6395620e-3367-4d44-a4f4-ca5b9deb587b",
+ :block/left {:db/id 37},
+ :block/refs [{:db/id 4} {:db/id 20} {:db/id 21}],
+ :block/format :markdown,
+ :block/content "TODO #reading 实用 Common Lisp 编程 #[[Common Lisp]]",
+ :db/id 26,
+ :block/path-refs [{:db/id 4} {:db/id 19} {:db/id 20} {:db/id 21}],
+ :block/parent {:db/id 19},
+ :block/unordered true, 
+ :block/page {:db/id 19}, 
+ :block/marker "TODO"}

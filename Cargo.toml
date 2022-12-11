@@ -1,0 +1,22 @@
+[package]
+name = "edn"
+version = "0.1.0"
+edition = "2021"
+description = "A Rust library for parsing and generating EDN data"
+authors = ["Andelf <andelf@gmail.com>"]
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/andelf/edn"
+readme = "README.md"
+keywords = ["edn", "parser", "generator"]
+categories = ["parsing", "serialization"]
+documentation = "https://docs.rs/edn"
+
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+pest = "2.5.1"
+pest_derive = "2.5.1"
+chrono = "0.4.23"
+uuid = "1.2.2"
+ordered-float = "3.4.0"

@@ -1,0 +1,61 @@
+// Grammar for EDN format
+// https://github.com/edn-format/edn
+// https://github.com/wagjo/serialization-formats
+
+edn = _{ SOI ~ value ~ EOI }
+
+value = _{ nil | boolean | string | character | float | integer | keyword | symbol |
+          list | vector | map | tagged | set }
+
+nil = { "nil" }
+
+boolean = { "true" | "false" }
+
+string  = @{ "\"" ~ inner ~ "\"" }
+inner   = @{ (!("\"" | "\\") ~ ANY)* ~ (escape ~ inner)? }
+// FXIME: unicode escape is not mentioned in the spec
+escape  = @{ "\\" ~ ("\"" | "\\" | "/" | "b" | "f" | "n" | "r" | "t" | unicode) }
+unicode = @{ "u" ~ ASCII_HEX_DIGIT{4} }
+
+character = @{ "\\" ~ ("newline" | "return" | "space" | "tab" | unicode | non_whitespace) }
+non_whitespace = @{ !("\n" | "\r" | " " | "\t") ~ ANY }
+
+symbol = @{ symbol_component ~ ("/" ~ symbol_component)? }
+symbol_component = @ {
+    (symbol_normal_begin ~ symbol_constituent*) |
+    (("-" | "+" | ".") ~ !ASCII_DIGIT ~ symbol_constituent+) |
+    ("-" | "+" | ".") }
+symbol_constituent = @{ (ASCII_ALPHANUMERIC | "." | "*" | "+" | "!" | "-" | "_" | "?" | "$" | "%" | "&" | "=" | "<" | ">" | ":" | "#") }
+symbol_normal_begin = @{ ASCII_ALPHA | "*" | "!" | "_" | "?" | "$" | "%" | "&" | "=" | "<" | ">" }
+
+// FIXME: :14d
+// FIXME: :14d/1000
+keyword = @{ ":" ~ symbol_constituent* ~ ("/" ~ symbol_component)? }
+
+integer = @{ ("-" | "+")? ~ int ~ "N"? }
+int    = @{ "0" | ASCII_NONZERO_DIGIT ~ ASCII_DIGIT* }
+exp    = @{ ("E" | "e") ~ ("+" | "-")? ~ ASCII_DIGIT+ }
+
+// FIXME: .233 1.e10
+float = @ { ("-" | "+")? ~ int ~ ("." ~ ASCII_DIGIT+ ~ exp? | exp) ~ "M"? }
+
+list = { "(" ~ value_list? ~ ")" }
+value_list = _{ value ~ (delim+ ~ value)* }
+
+vector = { "[" ~ value_list? ~ "]" }
+
+map = { "{" ~ delim* ~ value_pairs? ~ "}" }
+value_pairs = ${ value ~ delim+ ~ value ~ ( delim+ ~ value ~ delim+ ~ value)* }
+
+set = { "#{" ~ value_list? ~ "}" }
+
+// TODO: discard support
+tagged = ${ "#" ~ &ASCII_ALPHA ~ symbol ~ delim+ ~ value }
+
+// FIXME: | &"[" | &"]" | &"(" | &")" | &"{" | &"}"
+// #js[1,2,3]
+delim = _{ WHITESPACE | COMMENT }
+
+WHITESPACE = _{ " " | "\t" | "\n" | "\r" | "," }
+COMMENT = _{ ";" ~ (!NEWLINE ~ ANY)* }
+
