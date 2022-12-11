@@ -45,6 +45,16 @@ fn unescape_string(s: &str) -> String {
     result
 }
 
+fn unescape_character(s: &str) -> char {
+    match s {
+        "newline" => '\n',
+        "return" => '\r',
+        "space" => ' ',
+        "tab" => '\t',
+        _ => s.chars().next().unwrap(),
+    }
+}
+
 fn parse_value(pair: Pair<Rule>) -> EDNValue {
     match pair.as_rule() {
         Rule::nil => EDNValue::Nil,
@@ -70,7 +80,7 @@ fn parse_value(pair: Pair<Rule>) -> EDNValue {
 
             EDNValue::Map(map)
         }
-        Rule::character => EDNValue::Character(pair.as_str().chars().next().unwrap()),
+        Rule::character => EDNValue::Character(unescape_character(&pair.as_str()[1..])),
         Rule::tagged => {
             let mut tagged = pair.into_inner();
             let tag = tagged.next().unwrap().as_str();

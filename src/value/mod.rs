@@ -1,4 +1,5 @@
 use std::{
+    borrow::Cow,
     collections::{HashMap, HashSet},
     fmt::Display,
 };
@@ -80,7 +81,7 @@ impl std::fmt::Display for Value {
                 i.to_rfc3339_opts(SecondsFormat::Millis, true)
             ),
             Value::Uuid(u) => write!(f, "#uuid \"{}\"", u),
-            Value::Character(c) => write!(f, "\\{}", c),
+            Value::Character(c) => write!(f, "\\{}", escape_character(c)),
             Value::Tagged(t, v) => write!(f, "#{} {}", t, v),
         }
     }
@@ -162,6 +163,10 @@ pub enum Key {
     Keyword(String),
     String(String),
     Symbol(String),
+    Integer(i64),
+    Boolean(bool),
+    Character(char),
+    Uuid(Uuid),
 }
 
 impl Display for Key {
@@ -170,6 +175,10 @@ impl Display for Key {
             Key::Keyword(s) => write!(f, ":{}", s),
             Key::String(s) => write!(f, "{:?}", s),
             Key::Symbol(s) => write!(f, "{}", s),
+            Key::Integer(i) => write!(f, "{}", i),
+            Key::Boolean(b) => write!(f, "{}", b),
+            Key::Character(c) => write!(f, "\\{}", escape_character(c)),
+            Key::Uuid(u) => write!(f, "#uuid \"{}\"", u),
         }
     }
 }
@@ -182,7 +191,21 @@ impl TryFrom<Value> for Key {
             Value::Keyword(s) => Ok(Key::Keyword(s)),
             Value::String(s) => Ok(Key::String(s)),
             Value::Symbol(s) => Ok(Key::Symbol(s)),
+            Value::Integer(i) => Ok(Key::Integer(i)),
+            Value::Boolean(b) => Ok(Key::Boolean(b)),
+            Value::Character(c) => Ok(Key::Character(c)),
+            Value::Uuid(u) => Ok(Key::Uuid(u)),
             _ => Err(format!("Invalid key: {}", value)),
         }
+    }
+}
+
+fn escape_character(c: &char) -> Cow<'static, str> {
+    match c {
+        '\n' => "newline".into(),
+        '\r' => "return".into(),
+        ' ' => "space".into(),
+        '\t' => "tab".into(),
+        c => c.to_string().into(),
     }
 }
