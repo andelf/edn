@@ -1,4 +1,4 @@
-//! https://docs.rs/symbol/0.1.9/src/symbol/lib.rs.html#84-86
+//! via https://docs.rs/symbol/0.1.9/src/symbol/lib.rs.html#84-86
 
 use std::cmp::Ordering;
 use std::collections::BTreeSet;
@@ -20,11 +20,12 @@ pub struct Symbol {
 impl Symbol {
     /// Retrieves the address of the backing string.
     #[inline(always)]
-    pub fn addr(self) -> usize {
+    fn addr(self) -> usize {
         self.s.as_ptr() as usize
     }
 
     /// Retrieves the string from the Symbol.
+    #[inline(always)]
     pub fn as_str(self) -> &'static str {
         self.s
     }
@@ -77,19 +78,17 @@ impl Hash for Symbol {
 impl<S: AsRef<str>> From<S> for Symbol {
     fn from(s: S) -> Symbol {
         let s = s.as_ref();
-        {
-            if let Ok(mut heap) = unsafe { SYMBOL_HEAP.lock() } {
-                match heap.get(s) {
-                    Some(s) => Symbol { s },
-                    None => {
-                        let s = leak_string(s.to_owned());
-                        heap.insert(s);
-                        return Symbol { s };
-                    }
+        if let Ok(mut heap) = unsafe { SYMBOL_HEAP.lock() } {
+            match heap.get(s) {
+                Some(s) => Symbol { s },
+                None => {
+                    let s = leak_string(s.to_owned());
+                    heap.insert(s);
+                    return Symbol { s };
                 }
-            } else {
-                unreachable!("failed to lock symbol heap")
             }
+        } else {
+            unreachable!("failed to lock symbol heap")
         }
     }
 }
