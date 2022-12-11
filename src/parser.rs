@@ -106,14 +106,11 @@ fn parse_value(pair: Pair<Rule>) -> EDNValue {
     }
 }
 
-pub fn parse_edn(input: &str) -> Result<(), Error<Rule>> {
+pub fn parse_edn(input: &str) -> Result<EDNValue, Error<Rule>> {
     use pest::Parser;
 
     let edn = EDNParser::parse(Rule::edn, input)?.next().unwrap();
-
     let val = parse_value(edn);
 
-    println!("{}", val);
-
-    Ok(())
+    Ok(val)
 }
