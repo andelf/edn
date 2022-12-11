@@ -72,7 +72,7 @@ impl serde::Serializer for Serializer {
     type SerializeTupleStruct = SerializeVec;
     type SerializeTupleVariant = Impossible<Value, Error>;
     type SerializeMap = SerializeMap;
-    type SerializeStruct = Impossible<Value, Error>;
+    type SerializeStruct = SerializeMap;
     type SerializeStructVariant = Impossible<Value, Error>;
 
     #[inline]
@@ -202,18 +202,18 @@ impl serde::Serializer for Serializer {
 
     fn serialize_tuple_struct(
         self,
-        name: &'static str,
-        len: usize,
+        _name: &'static str,
+        _len: usize,
     ) -> Result<Self::SerializeTupleStruct> {
         todo!()
     }
 
     fn serialize_tuple_variant(
         self,
-        name: &'static str,
-        variant_index: u32,
-        variant: &'static str,
-        len: usize,
+        _name: &'static str,
+        _variant_index: u32,
+        _variant: &'static str,
+        _len: usize,
     ) -> Result<Self::SerializeTupleVariant> {
         todo!()
     }
@@ -225,16 +225,19 @@ impl serde::Serializer for Serializer {
         })
     }
 
-    fn serialize_struct(self, name: &'static str, len: usize) -> Result<Self::SerializeStruct> {
-        todo!()
+    fn serialize_struct(self, _name: &'static str, _lenn: usize) -> Result<Self::SerializeStruct> {
+        Ok(SerializeMap {
+            map: Map::new(),
+            next_key: None,
+        })
     }
 
     fn serialize_struct_variant(
         self,
-        name: &'static str,
-        variant_index: u32,
-        variant: &'static str,
-        len: usize,
+        _name: &'static str,
+        _variant_index: u32,
+        _variant: &'static str,
+        _len: usize,
     ) -> Result<Self::SerializeStructVariant> {
         todo!()
     }
@@ -436,11 +439,7 @@ impl serde::Serializer for MapKeySerializer {
         todo!()
     }
 
-    fn serialize_newtype_struct<T: ?Sized>(
-        self,
-        name: &'static str,
-        value: &T,
-    ) -> Result<Self::Ok>
+    fn serialize_newtype_struct<T: ?Sized>(self, name: &'static str, value: &T) -> Result<Self::Ok>
     where
         T: Serialize,
     {
@@ -490,7 +489,7 @@ impl serde::Serializer for MapKeySerializer {
         todo!()
     }
 
-    fn serialize_struct(self, _name: &'static str,_lenn: usize) -> Result<Self::SerializeStruct> {
+    fn serialize_struct(self, _name: &'static str, _lenn: usize) -> Result<Self::SerializeStruct> {
         todo!()
     }
 
@@ -502,5 +501,21 @@ impl serde::Serializer for MapKeySerializer {
         _len: usize,
     ) -> Result<Self::SerializeStructVariant> {
         todo!()
+    }
+}
+
+impl serde::ser::SerializeStruct for SerializeMap {
+    type Ok = Value;
+    type Error = Error;
+
+    fn serialize_field<T>(&mut self, key: &'static str, value: &T) -> Result<()>
+    where
+        T: ?Sized + Serialize,
+    {
+        serde::ser::SerializeMap::serialize_entry(self, key, value)
+    }
+
+    fn end(self) -> Result<Value> {
+        serde::ser::SerializeMap::end(self)
     }
 }
