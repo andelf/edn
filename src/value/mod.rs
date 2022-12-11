@@ -10,6 +10,7 @@ use crate::error::Error;
 use crate::symbol::Symbol;
 use crate::Map;
 
+mod from;
 mod ser;
 
 /// Represents any valid EDN value.
