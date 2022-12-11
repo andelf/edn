@@ -7,11 +7,13 @@ pub mod parser;
 pub mod symbol;
 pub mod value;
 pub mod error;
+pub mod map;
 mod macros;
 // pub mod ser;
 
 pub use value::Value;
 pub use symbol::Symbol;
+pub use map::Map;
 
 pub use value::to_value;
 

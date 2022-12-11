@@ -86,11 +86,11 @@ macro_rules! edn_internal{
     // Done.
     (@object $object:ident () () ()) => {};
 
-    /*
+
     // Insert the current entry followed by trailing comma.
-    (@object $object:ident [$($key:tt)+] ($value:expr) , $($rest:tt)*) => {
-        let _ = $object.insert(($($key)+).into(), $value);
-        edn_internal!(@object $object () ($($rest)*) ($($rest)*));
+    (@object $object:ident [$($key:tt)+] ($value:expr) : $($rest:tt)*) => {
+        let _ = $object.insert(::std::stringify!($($key)+).into(), $value);
+        edn_internal!(@object $object (:) ($($rest)*) ($($rest)*));
     };
 
     // Current entry followed by unexpected token.
@@ -98,84 +98,62 @@ macro_rules! edn_internal{
         edn_unexpected!($unexpected);
     };
 
-     // Insert the last entry without trailing comma.
-     (@object $object:ident [$($key:tt)+] ($value:expr)) => {
-        let _ = $object.insert(($($key)+).into(), $value);
+    // Insert the last entry without trailing comma.
+    (@object $object:ident [$($key:tt)+] ($value:expr)) => {
+        let _ = $object.insert(::std::stringify!($($key)+).into(), $value);
     };
 
     // Next value is `null`.
-    (@object $object:ident ($($key:tt)+) (: nil $($rest:tt)*) $copy:tt) => {
+    (@object $object:ident ($($key:tt)+) (nil $($rest:tt)*) $copy:tt) => {
         edn_internal!(@object $object [$($key)+] (edn_internal!(null)) $($rest)*);
     };
 
     // Next value is `true`.
-    (@object $object:ident ($($key:tt)+) (: true $($rest:tt)*) $copy:tt) => {
+    (@object $object:ident ($($key:tt)+) (true $($rest:tt)*) $copy:tt) => {
         edn_internal!(@object $object [$($key)+] (edn_internal!(true)) $($rest)*);
     };
 
     // Next value is `false`.
-    (@object $object:ident ($($key:tt)+) (: false $($rest:tt)*) $copy:tt) => {
+    (@object $object:ident ($($key:tt)+) (false $($rest:tt)*) $copy:tt) => {
         edn_internal!(@object $object [$($key)+] (edn_internal!(false)) $($rest)*);
     };
 
     // Next value is an array.
-    (@object $object:ident ($($key:tt)+) (: [$($array:tt)*] $($rest:tt)*) $copy:tt) => {
+    (@object $object:ident ($($key:tt)+) ([$($array:tt)*] $($rest:tt)*) $copy:tt) => {
         edn_internal!(@object $object [$($key)+] (edn_internal!([$($array)*])) $($rest)*);
     };
 
     // Next value is a map.
-    (@object $object:ident ($($key:tt)+) (: {$($map:tt)*} $($rest:tt)*) $copy:tt) => {
+    (@object $object:ident ($($key:tt)+) ({$($map:tt)*} $($rest:tt)*) $copy:tt) => {
         edn_internal!(@object $object [$($key)+] (edn_internal!({$($map)*})) $($rest)*);
     };
 
     // Next value is an expression followed by comma.
-    (@object $object:ident ($($key:tt)+) (: $value:expr , $($rest:tt)*) $copy:tt) => {
+    (@object $object:ident ($($key:tt)+) (($value:expr) : $($rest:tt)*) $copy:tt) => {
         edn_internal!(@object $object [$($key)+] (edn_internal!($value)) , $($rest)*);
     };
 
     // Last value is an expression with no trailing comma.
-    (@object $object:ident ($($key:tt)+) (: $value:expr) $copy:tt) => {
+    (@object $object:ident ($($key:tt)+) ($value:expr) $copy:tt) => {
         edn_internal!(@object $object [$($key)+] (edn_internal!($value)));
-    };
-
-    // Missing value for last entry. Trigger a reasonable error message.
-    (@object $object:ident ($($key:tt)+) (:) $copy:tt) => {
-        // "unexpected end of macro invocation"
-        edn_internal!();
-    };
-
-    // Missing colon and value for last entry. Trigger a reasonable error
-    // message.
-    (@object $object:ident ($($key:tt)+) () $copy:tt) => {
-        // "unexpected end of macro invocation"
-        json_internal!();
-    };
-
-    // Misplaced colon. Trigger a reasonable error message.
-    (@object $object:ident () (: $($rest:tt)*) ($colon:tt $($copy:tt)*)) => {
-        // Takes no arguments so "no rules expected the token `:`".
-        json_unexpected!($colon);
-    };
-
-    // Found a comma inside a key. Trigger a reasonable error message.
-    (@object $object:ident ($($key:tt)*) (, $($rest:tt)*) ($comma:tt $($copy:tt)*)) => {
-        // Takes no arguments so "no rules expected the token `,`".
-        json_unexpected!($comma);
     };
 
     // Key is fully parenthesized. This avoids clippy double_parens false
     // positives because the parenthesization may be necessary here.
-    (@object $object:ident () (($key:expr) : $($rest:tt)*) $copy:tt) => {
-        json_internal!(@object $object ($key) (: $($rest)*) (: $($rest)*));
+    (@object $object:ident () (: ($key:ident) $($rest:tt)*) $copy:tt) => {
+        json_internal!(@object $object (:$key) ($($rest)*) ($($rest)*));
     };
 
+    (@object $object:ident () (: ($key1:ident) / ($key2:ident) $($rest:tt)*) $copy:tt) => {
+        json_internal!(@object $object [:$key/$key2] ($($rest)*) ($($rest)*));
+    };
 
      // Munch a token into the current key.
      (@object $object:ident ($($key:tt)*) ($tt:tt $($rest:tt)*) $copy:tt) => {
         json_internal!(@object $object ($($key)* $tt) ($($rest)*) ($($rest)*));
     };
 
-     */
+
     //////////////////////////////////////////////////////////////////////////
     // The main implementation.
     //
@@ -217,7 +195,7 @@ macro_rules! edn_internal{
     ({ $($tt:tt)+ }) => {
         $crate::Value::Map({
             let mut object = $crate::Map::new();
-            json_internal!(@object object () ($($tt)+) ($($tt)+));
+            edn_internal!(@object object () ($($tt)+) ($($tt)+));
             object
         })
     };

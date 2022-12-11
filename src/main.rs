@@ -1,4 +1,6 @@
 
+use std::collections::HashMap;
+
 use edn::edn;
 
 fn main() {
@@ -10,6 +12,13 @@ fn main() {
         println!("Parse error {}", err);
     }
 
+    let mut v = HashMap::new();
+    v.insert(":x", 1);
+    v.insert(":y", 2);
+    v.insert(":z", 3);
+
+    println!("=> {}", edn::to_value(v).unwrap());
+
 
     println!("=> {}", edn!(false));
     println!("=> {}", edn!(true));
@@ -19,6 +28,6 @@ fn main() {
     println!("=> {}", edn!([1, 2, 3]));
     println!("=> {}", edn!([1, nil, true, "asdfa", 9.9]));
 
-    println!("=> {}", edn!(:x));
+   // println!("=> {}", edn!({:x}));
 
 }

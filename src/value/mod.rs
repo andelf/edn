@@ -1,8 +1,4 @@
-use std::{
-    borrow::Cow,
-    collections::{HashMap, HashSet},
-    fmt::Display,
-};
+use std::{borrow::Cow, collections::HashSet, fmt::Display};
 
 use chrono::{DateTime, FixedOffset, SecondsFormat};
 use ordered_float::OrderedFloat;
@@ -12,6 +8,7 @@ use uuid::Uuid;
 use self::ser::Serializer;
 use crate::error::Error;
 use crate::symbol::Symbol;
+use crate::Map;
 
 mod ser;
 
@@ -28,7 +25,7 @@ pub enum Value {
     Vector(Vec<Value>),
     List(Vec<Value>),
     Set(HashSet<Value>),
-    Map(HashMap<Key, Value>),
+    Map(Map<Key, Value>),
     Instant(DateTime<FixedOffset>),
     Uuid(Uuid),
     Character(char),
@@ -172,7 +169,7 @@ impl std::hash::Hash for Value {
 }
 
 /// Represents any valid EDN key.
-#[derive(Clone, Eq, PartialEq, Hash, Debug)]
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub enum Key {
     Keyword(Symbol),
     String(String),

@@ -1,12 +1,10 @@
-use std::collections::HashMap;
-
 // use pest::Parser;
 use pest::error::Error;
 use pest::iterators::Pair;
 use pest_derive::Parser;
 use uuid::Uuid;
 
-use crate::value::{Key as EDNKey, Value as EDNValue};
+use crate::{Map, Value};
 
 #[derive(Parser)]
 #[grammar = "grammars/edn.pest"] // relative to project `src`
@@ -55,20 +53,21 @@ fn unescape_character(s: &str) -> char {
     }
 }
 
-fn parse_value(pair: Pair<Rule>) -> EDNValue {
+fn parse_value(pair: Pair<Rule>) -> Value {
     match pair.as_rule() {
-        Rule::nil => EDNValue::Nil,
-        Rule::boolean => EDNValue::Boolean(pair.as_str() == "true"),
-        Rule::integer => EDNValue::Integer(pair.as_str().parse().unwrap()),
-        Rule::float => EDNValue::Float(pair.as_str().parse().unwrap()),
-        Rule::string => EDNValue::String(unescape_string(pair.as_str())),
-        Rule::symbol => EDNValue::Symbol(pair.as_str().into()),
-        Rule::keyword => EDNValue::Keyword(pair.as_str()[1..].into()),
-        Rule::vector => EDNValue::Vector(pair.into_inner().map(parse_value).collect()),
-        Rule::list => EDNValue::List(pair.into_inner().map(parse_value).collect()),
-        Rule::set => EDNValue::Set(pair.into_inner().map(parse_value).collect()),
+        Rule::nil => Value::Nil,
+        Rule::boolean => Value::Boolean(pair.as_str() == "true"),
+        Rule::integer => Value::Integer(pair.as_str().parse().unwrap()),
+        Rule::float => Value::Float(pair.as_str().parse().unwrap()),
+        Rule::string => Value::String(unescape_string(pair.as_str())),
+        Rule::symbol => Value::Symbol(pair.as_str().into()),
+        Rule::keyword => Value::Keyword(pair.as_str()[1..].into()),
+        Rule::vector => Value::Vector(pair.into_inner().map(parse_value).collect()),
+        Rule::list => Value::List(pair.into_inner().map(parse_value).collect()),
+        Rule::set => Value::Set(pair.into_inner().map(parse_value).collect()),
         Rule::map => {
-            let mut map: HashMap<EDNKey, EDNValue> = HashMap::new();
+            //let mut map: HashMap<EDNKey, Value> = HashMap::new();
+            let mut map = Map::new();
             for value_pairs in pair.into_inner() {
                 let mut value_pairs = value_pairs.into_inner();
                 while let Ok([key, value]) = value_pairs.next_chunk() {
@@ -78,9 +77,9 @@ fn parse_value(pair: Pair<Rule>) -> EDNValue {
                 }
             }
 
-            EDNValue::Map(map)
+            Value::Map(map)
         }
-        Rule::character => EDNValue::Character(unescape_character(&pair.as_str()[1..])),
+        Rule::character => Value::Character(unescape_character(&pair.as_str()[1..])),
         Rule::tagged => {
             let mut tagged = pair.into_inner();
             let tag = tagged.next().unwrap().as_str();
@@ -88,16 +87,13 @@ fn parse_value(pair: Pair<Rule>) -> EDNValue {
             if tag == "uuid" {
                 let val = tagged.next().unwrap().as_str();
                 let uuid = Uuid::parse_str(val.trim_matches('"')).unwrap();
-                EDNValue::Uuid(uuid)
+                Value::Uuid(uuid)
             } else if tag == "inst" {
                 let val = tagged.next().unwrap().as_str();
                 let inst = chrono::DateTime::parse_from_rfc3339(val.trim_matches('"')).unwrap();
-                EDNValue::Instant(inst)
+                Value::Instant(inst)
             } else {
-                EDNValue::Tagged(
-                    tag.into(),
-                    Box::new(parse_value(tagged.next().unwrap())),
-                )
+                Value::Tagged(tag.into(), Box::new(parse_value(tagged.next().unwrap())))
             }
         }
         _ => {
@@ -106,7 +102,7 @@ fn parse_value(pair: Pair<Rule>) -> EDNValue {
     }
 }
 
-pub fn parse_edn(input: &str) -> Result<EDNValue, Error<Rule>> {
+pub fn parse_edn(input: &str) -> Result<Value, Error<Rule>> {
     use pest::Parser;
 
     let edn = EDNParser::parse(Rule::edn, input)?.next().unwrap();
