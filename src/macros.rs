@@ -141,23 +141,23 @@ macro_rules! edn_internal{
     // Key is fully parenthesized. This avoids clippy double_parens false
     // positives because the parenthesization may be necessary here.
     (@object $object:ident () (: ($key:ident) $($rest:tt)*) $copy:tt) => {
-        json_internal!(@object $object (:$key) ($($rest)*) ($($rest)*));
+        edn_internal!(@object $object (:$key) ($($rest)*) ($($rest)*));
     };
 
     (@object $object:ident () (: ($key1:ident) / ($key2:ident) $($rest:tt)*) $copy:tt) => {
-        json_internal!(@object $object [:$key/$key2] ($($rest)*) ($($rest)*));
+        edn_internal!(@object $object [:$key/$key2] ($($rest)*) ($($rest)*));
     };
 
      // Munch a token into the current key.
      (@object $object:ident ($($key:tt)*) ($tt:tt $($rest:tt)*) $copy:tt) => {
-        json_internal!(@object $object ($($key)* $tt) ($($rest)*) ($($rest)*));
+        edn_internal!(@object $object ($($key)* $tt) ($($rest)*) ($($rest)*));
     };
 
 
     //////////////////////////////////////////////////////////////////////////
     // The main implementation.
     //
-    // Must be invoked as: edn_internal!($($json)+)
+    // Must be invoked as: edn_internal!($($edn)+)
     //////////////////////////////////////////////////////////////////////////
 
     (nil) => {

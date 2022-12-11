@@ -9,7 +9,7 @@ pub enum Error {
     Utf8(#[from] std::str::Utf8Error),
 }
 
-/// Alias for a `Result` with the error type `serde_json::Error`.
+/// Alias for a `Result` with the error type `edn::Error`.
 pub type Result<T> = result::Result<T, Error>;
 
 impl serde::ser::Error for Error {

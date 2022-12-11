@@ -369,13 +369,6 @@ type OccupiedEntryImpl<'a> = btree_map::OccupiedEntry<'a, Key, Value>;
 
 impl<'a> Entry<'a> {
     /// Returns a reference to this entry's key.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// let mut map = edn::Map::new();
-    /// assert_eq!(map.entry("serde").key(), &"serde");
-    /// ```
     pub fn key(&self) -> &Key {
         match self {
             Entry::Vacant(e) => e.key(),
@@ -385,17 +378,6 @@ impl<'a> Entry<'a> {
 
     /// Ensures a value is in the entry by inserting the default if empty, and
     /// returns a mutable reference to the value in the entry.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use edn::json;
-    /// #
-    /// let mut map = edn::Map::new();
-    /// map.entry("serde").or_insert(json!(12));
-    ///
-    /// assert_eq!(map["serde"], 12);
-    /// ```
     pub fn or_insert(self, default: Value) -> &'a mut Value {
         match self {
             Entry::Vacant(entry) => entry.insert(default),
@@ -406,17 +388,6 @@ impl<'a> Entry<'a> {
     /// Ensures a value is in the entry by inserting the result of the default
     /// function if empty, and returns a mutable reference to the value in the
     /// entry.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use edn::json;
-    /// #
-    /// let mut map = edn::Map::new();
-    /// map.entry("serde").or_insert_with(|| json!("hoho"));
-    ///
-    /// assert_eq!(map["serde"], "hoho".to_owned());
-    /// ```
     pub fn or_insert_with<F>(self, default: F) -> &'a mut Value
     where
         F: FnOnce() -> Value,
@@ -429,25 +400,6 @@ impl<'a> Entry<'a> {
 
     /// Provides in-place mutable access to an occupied entry before any
     /// potential inserts into the map.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use edn::json;
-    /// #
-    /// let mut map = edn::Map::new();
-    /// map.entry("serde")
-    ///     .and_modify(|e| *e = json!("rust"))
-    ///     .or_insert(json!("cpp"));
-    ///
-    /// assert_eq!(map["serde"], "cpp");
-    ///
-    /// map.entry("serde")
-    ///     .and_modify(|e| *e = json!("rust"))
-    ///     .or_insert(json!("cpp"));
-    ///
-    /// assert_eq!(map["serde"], "rust");
-    /// ```
     pub fn and_modify<F>(self, f: F) -> Self
     where
         F: FnOnce(&mut Value),
@@ -465,21 +417,6 @@ impl<'a> Entry<'a> {
 impl<'a> VacantEntry<'a> {
     /// Gets a reference to the key that would be used when inserting a value
     /// through the VacantEntry.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use edn::map::Entry;
-    ///
-    /// let mut map = edn::Map::new();
-    ///
-    /// match map.entry("serde") {
-    ///     Entry::Vacant(vacant) => {
-    ///         assert_eq!(vacant.key(), &"serde");
-    ///     }
-    ///     Entry::Occupied(_) => unimplemented!(),
-    /// }
-    /// ```
     #[inline]
     pub fn key(&self) -> &Key {
         self.vacant.key()
@@ -487,23 +424,6 @@ impl<'a> VacantEntry<'a> {
 
     /// Sets the value of the entry with the VacantEntry's key, and returns a
     /// mutable reference to it.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use edn::json;
-    /// #
-    /// use edn::map::Entry;
-    ///
-    /// let mut map = edn::Map::new();
-    ///
-    /// match map.entry("serde") {
-    ///     Entry::Vacant(vacant) => {
-    ///         vacant.insert(json!("hoho"));
-    ///     }
-    ///     Entry::Occupied(_) => unimplemented!(),
-    /// }
-    /// ```
     #[inline]
     pub fn insert(self, value: Value) -> &'a mut Value {
         self.vacant.insert(value)
@@ -512,100 +432,24 @@ impl<'a> VacantEntry<'a> {
 
 impl<'a> OccupiedEntry<'a> {
     /// Gets a reference to the key in the entry.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use edn::json;
-    /// #
-    /// use edn::map::Entry;
-    ///
-    /// let mut map = edn::Map::new();
-    /// map.insert("serde".to_owned(), json!(12));
-    ///
-    /// match map.entry("serde") {
-    ///     Entry::Occupied(occupied) => {
-    ///         assert_eq!(occupied.key(), &"serde");
-    ///     }
-    ///     Entry::Vacant(_) => unimplemented!(),
-    /// }
-    /// ```
     #[inline]
     pub fn key(&self) -> &Key {
         self.occupied.key()
     }
 
     /// Gets a reference to the value in the entry.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use edn::json;
-    /// #
-    /// use edn::map::Entry;
-    ///
-    /// let mut map = edn::Map::new();
-    /// map.insert("serde".to_owned(), json!(12));
-    ///
-    /// match map.entry("serde") {
-    ///     Entry::Occupied(occupied) => {
-    ///         assert_eq!(occupied.get(), 12);
-    ///     }
-    ///     Entry::Vacant(_) => unimplemented!(),
-    /// }
-    /// ```
     #[inline]
     pub fn get(&self) -> &Value {
         self.occupied.get()
     }
 
     /// Gets a mutable reference to the value in the entry.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use edn::json;
-    /// #
-    /// use edn::map::Entry;
-    ///
-    /// let mut map = edn::Map::new();
-    /// map.insert("serde".to_owned(), json!([1, 2, 3]));
-    ///
-    /// match map.entry("serde") {
-    ///     Entry::Occupied(mut occupied) => {
-    ///         occupied.get_mut().as_array_mut().unwrap().push(json!(4));
-    ///     }
-    ///     Entry::Vacant(_) => unimplemented!(),
-    /// }
-    ///
-    /// assert_eq!(map["serde"].as_array().unwrap().len(), 4);
-    /// ```
     #[inline]
     pub fn get_mut(&mut self) -> &mut Value {
         self.occupied.get_mut()
     }
 
     /// Converts the entry into a mutable reference to its value.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use edn::json;
-    /// #
-    /// use edn::map::Entry;
-    ///
-    /// let mut map = edn::Map::new();
-    /// map.insert("serde".to_owned(), json!([1, 2, 3]));
-    ///
-    /// match map.entry("serde") {
-    ///     Entry::Occupied(mut occupied) => {
-    ///         occupied.into_mut().as_array_mut().unwrap().push(json!(4));
-    ///     }
-    ///     Entry::Vacant(_) => unimplemented!(),
-    /// }
-    ///
-    /// assert_eq!(map["serde"].as_array().unwrap().len(), 4);
-    /// ```
     #[inline]
     pub fn into_mut(self) -> &'a mut Value {
         self.occupied.into_mut()
@@ -613,49 +457,12 @@ impl<'a> OccupiedEntry<'a> {
 
     /// Sets the value of the entry with the `OccupiedEntry`'s key, and returns
     /// the entry's old value.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use edn::json;
-    /// #
-    /// use edn::map::Entry;
-    ///
-    /// let mut map = edn::Map::new();
-    /// map.insert("serde".to_owned(), json!(12));
-    ///
-    /// match map.entry("serde") {
-    ///     Entry::Occupied(mut occupied) => {
-    ///         assert_eq!(occupied.insert(json!(13)), 12);
-    ///         assert_eq!(occupied.get(), 13);
-    ///     }
-    ///     Entry::Vacant(_) => unimplemented!(),
-    /// }
-    /// ```
     #[inline]
     pub fn insert(&mut self, value: Value) -> Value {
         self.occupied.insert(value)
     }
 
     /// Takes the value of the entry out of the map, and returns it.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use edn::json;
-    /// #
-    /// use edn::map::Entry;
-    ///
-    /// let mut map = edn::Map::new();
-    /// map.insert("serde".to_owned(), json!(12));
-    ///
-    /// match map.entry("serde") {
-    ///     Entry::Occupied(occupied) => {
-    ///         assert_eq!(occupied.remove(), 12);
-    ///     }
-    ///     Entry::Vacant(_) => unimplemented!(),
-    /// }
-    /// ```
     #[inline]
     pub fn remove(self) -> Value {
         return self.occupied.remove();
