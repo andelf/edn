@@ -6,9 +6,14 @@ use std::{
 
 use chrono::{DateTime, FixedOffset, SecondsFormat};
 use ordered_float::OrderedFloat;
+use serde::Serialize;
 use uuid::Uuid;
 
+use self::ser::Serializer;
+use crate::error::Error;
 use crate::symbol::Symbol;
+
+mod ser;
 
 /// Represents any valid EDN value.
 #[derive(Clone, Eq, PartialEq, Debug)]
@@ -28,6 +33,13 @@ pub enum Value {
     Uuid(Uuid),
     Character(char),
     Tagged(Symbol, Box<Value>),
+}
+
+pub fn to_value<T>(value: T) -> Result<Value, Error>
+where
+    T: Serialize,
+{
+    value.serialize(Serializer)
 }
 
 impl std::fmt::Display for Value {
@@ -181,6 +193,17 @@ impl Display for Key {
             Key::Boolean(b) => write!(f, "{}", b),
             Key::Character(c) => write!(f, "\\{}", escape_character(c)),
             Key::Uuid(u) => write!(f, "#uuid \"{}\"", u),
+        }
+    }
+}
+
+// Use keyward as a default key
+impl<T: AsRef<str>> From<T> for Key {
+    fn from(s: T) -> Self {
+        if s.as_ref().as_bytes()[0] == b':' {
+            Key::Symbol(s.as_ref()[1..].into())
+        } else {
+            Key::Symbol(s.as_ref().into())
         }
     }
 }

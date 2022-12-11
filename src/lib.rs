@@ -6,8 +6,16 @@ extern crate test;
 pub mod parser;
 pub mod symbol;
 pub mod value;
+pub mod error;
+mod macros;
+// pub mod ser;
 
 pub use value::Value;
+pub use symbol::Symbol;
+
+pub use value::to_value;
+
+
 
 #[cfg(test)]
 mod tests {
@@ -25,6 +33,15 @@ mod tests {
     fn bench_parse(b: &mut Bencher) {
         b.iter(|| {
             let _ = parse_edn(INPUT).unwrap();
+        });
+    }
+
+    #[bench]
+    fn bench_dump(b: &mut Bencher) {
+        let v = parse_edn(INPUT).unwrap();
+
+        b.iter(|| {
+            let _ = v.to_string();
         });
     }
 

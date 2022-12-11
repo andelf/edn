@@ -20,6 +20,8 @@ pest_derive = "2.5.1"
 chrono = "0.4.23"
 uuid = "1.2.2"
 ordered-float = "3.4.0"
+serde = "1.0"
+thiserror = "1.0.37"
 
 [features]
 default = []
