@@ -8,16 +8,18 @@ use chrono::{DateTime, FixedOffset, SecondsFormat};
 use ordered_float::OrderedFloat;
 use uuid::Uuid;
 
+use crate::symbol::Symbol;
+
 /// Represents any valid EDN value.
-#[derive(Clone, Eq, PartialEq)]
+#[derive(Clone, Eq, PartialEq, Debug)]
 pub enum Value {
     Nil,
     Boolean(bool),
     Integer(i64),
     Float(OrderedFloat<f64>),
     String(String),
-    Symbol(String),
-    Keyword(String),
+    Symbol(Symbol),
+    Keyword(Symbol),
     Vector(Vec<Value>),
     List(Vec<Value>),
     Set(HashSet<Value>),
@@ -25,7 +27,7 @@ pub enum Value {
     Instant(DateTime<FixedOffset>),
     Uuid(Uuid),
     Character(char),
-    Tagged(String, Box<Value>),
+    Tagged(Symbol, Box<Value>),
 }
 
 impl std::fmt::Display for Value {
@@ -158,11 +160,11 @@ impl std::hash::Hash for Value {
 }
 
 /// Represents any valid EDN key.
-#[derive(Clone, Eq, PartialEq, Hash)]
+#[derive(Clone, Eq, PartialEq, Hash, Debug)]
 pub enum Key {
-    Keyword(String),
+    Keyword(Symbol),
     String(String),
-    Symbol(String),
+    Symbol(Symbol),
     Integer(i64),
     Boolean(bool),
     Character(char),

@@ -4,6 +4,7 @@
 extern crate test;
 
 pub mod parser;
+pub mod symbol;
 pub mod value;
 
 pub use value::Value;
@@ -22,10 +23,21 @@ mod tests {
 
     #[bench]
     fn bench_parse(b: &mut Bencher) {
-        let input = include_str!("../data/block.edn");
+        let input = include_str!("../data/docs.edn");
 
         b.iter(|| {
             let _ = parse_edn(&input).unwrap();
+        });
+    }
+
+    #[bench]
+    fn bench_compare(b: &mut Bencher) {
+        let input = include_str!("../data/docs.edn");
+        let v1 = parse_edn(&input).unwrap();
+        let v2 = parse_edn(&input).unwrap();
+
+        b.iter(|| {
+            assert_eq!(v1, v2);
         });
     }
 }

@@ -62,8 +62,8 @@ fn parse_value(pair: Pair<Rule>) -> EDNValue {
         Rule::integer => EDNValue::Integer(pair.as_str().parse().unwrap()),
         Rule::float => EDNValue::Float(pair.as_str().parse().unwrap()),
         Rule::string => EDNValue::String(unescape_string(pair.as_str())),
-        Rule::symbol => EDNValue::Symbol(pair.as_str().to_string()),
-        Rule::keyword => EDNValue::Keyword(pair.as_str()[1..].to_string()),
+        Rule::symbol => EDNValue::Symbol(pair.as_str().into()),
+        Rule::keyword => EDNValue::Keyword(pair.as_str()[1..].into()),
         Rule::vector => EDNValue::Vector(pair.into_inner().map(parse_value).collect()),
         Rule::list => EDNValue::List(pair.into_inner().map(parse_value).collect()),
         Rule::set => EDNValue::Set(pair.into_inner().map(parse_value).collect()),
@@ -95,7 +95,7 @@ fn parse_value(pair: Pair<Rule>) -> EDNValue {
                 EDNValue::Instant(inst)
             } else {
                 EDNValue::Tagged(
-                    tag.to_string(),
+                    tag.into(),
                     Box::new(parse_value(tagged.next().unwrap())),
                 )
             }
