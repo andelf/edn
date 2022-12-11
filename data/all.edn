@@ -1,0 +1,18 @@
+{:block/uuid #uuid "6395621a-1183-4c5f-8b26-f87449aa154e",
+ :block/journal? true,
+ :block/updated-at 1670734350555,
+ :block/created-at 1670734350555,
+ :sets #{a b [1 2 3]}
+ :maps {:a 1, "foo" :bar, :f four}
+ :vectors [a b 42]
+ :lists (a b 42)
+ :t1 [:ghi]
+ :t2 #{{"a" #{{:b 2}}}}
+ :nl \newline
+ :pi 3.14159
+ :db/id 96,
+ :tagged-elements #myapp/Person {:first "Fred" :last "Mertz"}
+ :inst #inst "1985-04-12T23:20:50.52Z"
+ :block/name "2022-12-08",
+ :block/file {:db/id 86},
+ :block/original-name "2022-12-08"}

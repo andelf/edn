@@ -14,7 +14,7 @@ struct EDNParser;
 
 fn unescape_string(s: &str) -> String {
     let mut result = String::new();
-    let mut chars = s[1..s.len()-1].chars();
+    let mut chars = s[1..s.len() - 1].chars();
     while let Some(c) = chars.next() {
         if c == '\\' {
             match chars.next() {
@@ -79,6 +79,10 @@ fn parse_value(pair: Pair<Rule>) -> EDNValue {
                 let val = tagged.next().unwrap().as_str();
                 let uuid = Uuid::parse_str(val.trim_matches('"')).unwrap();
                 EDNValue::Uuid(uuid)
+            } else if tag == "inst" {
+                let val = tagged.next().unwrap().as_str();
+                let inst = chrono::DateTime::parse_from_rfc3339(val.trim_matches('"')).unwrap();
+                EDNValue::Instant(inst)
             } else {
                 EDNValue::Tagged(
                     tag.to_string(),
@@ -87,7 +91,7 @@ fn parse_value(pair: Pair<Rule>) -> EDNValue {
             }
         }
         _ => {
-            unimplemented!("{}", pair);
+            unreachable!()
         }
     }
 }

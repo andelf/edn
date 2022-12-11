@@ -1,4 +1,3 @@
-
 fn main() {
     let fname = std::env::args().nth(1).unwrap();
 

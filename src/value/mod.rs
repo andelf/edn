@@ -3,7 +3,7 @@ use std::{
     fmt::Display,
 };
 
-use chrono::{DateTime, Local};
+use chrono::{DateTime, FixedOffset, SecondsFormat};
 use ordered_float::OrderedFloat;
 use uuid::Uuid;
 
@@ -21,7 +21,7 @@ pub enum Value {
     List(Vec<Value>),
     Set(HashSet<Value>),
     Map(HashMap<Key, Value>),
-    Instant(DateTime<Local>),
+    Instant(DateTime<FixedOffset>),
     Uuid(Uuid),
     Character(char),
     Tagged(String, Box<Value>),
@@ -29,6 +29,9 @@ pub enum Value {
 
 impl std::fmt::Display for Value {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        if f.alternate() {
+            // TODO: impl using writer
+        }
         match self {
             Value::Nil => write!(f, "nil"),
             Value::Boolean(b) => write!(f, "{}", b),
@@ -71,7 +74,11 @@ impl std::fmt::Display for Value {
                 }
                 write!(f, "}}")
             }
-            Value::Instant(i) => write!(f, "#inst \"{}\"", i),
+            Value::Instant(i) => write!(
+                f,
+                "#inst \"{}\"",
+                i.to_rfc3339_opts(SecondsFormat::Millis, true)
+            ),
             Value::Uuid(u) => write!(f, "#uuid \"{}\"", u),
             Value::Character(c) => write!(f, "\\{}", c),
             Value::Tagged(t, v) => write!(f, "#{} {}", t, v),
