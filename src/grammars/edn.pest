@@ -39,15 +39,15 @@ exp    = @{ ("E" | "e") ~ ("+" | "-")? ~ ASCII_DIGIT+ }
 // FIXME: .233 1.e10
 float = @ { ("-" | "+")? ~ int ~ ("." ~ ASCII_DIGIT+ ~ exp? | exp) ~ "M"? }
 
-list = { "(" ~ value_list? ~ ")" }
+list = ${ "(" ~ delim* ~ value_list? ~ delim* ~ ")" }
 value_list = _{ value ~ (delim+ ~ value)* }
 
-vector = { "[" ~ value_list? ~ "]" }
+vector = ${ "[" ~ delim* ~ value_list? ~ delim* ~ "]" }
 
-map = { "{" ~ delim* ~ value_pairs? ~ "}" }
-value_pairs = ${ value ~ delim+ ~ value ~ ( delim+ ~ value ~ delim+ ~ value)* }
+map = ${ "{" ~ delim* ~ value_pairs? ~ delim* ~ "}" }
+value_pairs = _{ value ~ delim+ ~ value ~ ( delim+ ~ value ~ delim+ ~ value)* }
 
-set = { "#{" ~ value_list? ~ "}" }
+set = ${ "#{" ~ delim* ~ value_list? ~ delim* ~ "}" }
 
 // TODO: discard support
 tagged = ${ "#" ~ &ASCII_ALPHA ~ symbol ~ delim+ ~ value }

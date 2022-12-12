@@ -1,45 +1,60 @@
-// use pest::Parser;
-use pest::error::Error;
 use pest::iterators::Pair;
 use pest_derive::Parser;
 use uuid::Uuid;
 
-use crate::{Map, Value};
+use crate::{error::Result, Map, Value};
 
 #[derive(Parser)]
 #[grammar = "grammars/edn.pest"] // relative to project `src`
 struct EDNParser;
 
+// input s must be a string literal, `"...."`
 fn unescape_string(s: &str) -> String {
-    let mut result = String::new();
-    let mut chars = s[1..s.len() - 1].chars();
-    while let Some(c) = chars.next() {
-        if c == '\\' {
-            match chars.next() {
-                Some('t') => result.push('\t'),
-                Some('r') => result.push('\r'),
-                Some('n') => result.push('\n'),
-                Some('f') => result.push('\x0C'),
-                Some('b') => result.push('\x08'),
-                Some('"') => result.push('"'),
-                Some('\\') => result.push('\\'),
-                Some('u') => {
-                    let mut code = String::new();
-                    for _ in 0..4 {
-                        code.push(chars.next().unwrap());
+    if s.find('\\').is_none() {
+        return s[1..s.len() - 1].to_string();
+    }
+
+    let mut result = String::with_capacity(s.len());
+    let s = &s[1..s.len() - 1];
+
+    let mut chars = s.char_indices();
+    let mut start = 0;
+    loop {
+        match chars.next() {
+            Some((i, c)) => {
+                if c == '\\' {
+                    if start != i {
+                        result.push_str(&s[start..i]);
                     }
-                    let code = u32::from_str_radix(&code, 16).unwrap();
-                    result.push(std::char::from_u32(code).unwrap());
-                }
-                Some(c) => result.push(c),
-                None => {
-                    panic!("Unexpected end of string")
+                    match s.as_bytes().get(i + 1) {
+                        Some(b't') => result.push('\t'),
+                        Some(b'r') => result.push('\r'),
+                        Some(b'n') => result.push('\n'),
+                        Some(b'f') => result.push('\x0C'),
+                        Some(b'b') => result.push('\x08'),
+                        Some(b'"') => result.push('"'),
+                        Some(b'\\') => result.push('\\'),
+                        Some(b'u') => {
+                            let code = &s[i + 2..i + 6];
+                            let code = u32::from_str_radix(code, 16).unwrap();
+                            result.push(std::char::from_u32(code).unwrap());
+                            chars.advance_by(4).unwrap();
+                        }
+                        Some(_) | None => {
+                            panic!("Unexpected end of string")
+                        }
+                    }
+                    chars.advance_by(1).unwrap();
+                    start = chars.offset();
                 }
             }
-        } else {
-            result.push(c);
+            None => {
+                result.push_str(&s[start..]);
+                break;
+            }
         }
     }
+
     result
 }
 
@@ -49,7 +64,12 @@ fn unescape_character(s: &str) -> char {
         "return" => '\r',
         "space" => ' ',
         "tab" => '\t',
-        _ => s.chars().next().unwrap(),
+        _ if s.len() == 1 => s.chars().next().unwrap(),
+        _ if s.as_bytes()[0] == b'u' => {
+            let code = u32::from_str_radix(&s[1..], 16).unwrap();
+            std::char::from_u32(code).unwrap()
+        }
+        _ => panic!("Invalid character: {}", s),
     }
 }
 
@@ -66,17 +86,13 @@ fn parse_value(pair: Pair<Rule>) -> Value {
         Rule::list => Value::List(pair.into_inner().map(parse_value).collect()),
         Rule::set => Value::Set(pair.into_inner().map(parse_value).collect()),
         Rule::map => {
-            //let mut map: HashMap<EDNKey, Value> = HashMap::new();
             let mut map = Map::new();
-            for value_pairs in pair.into_inner() {
-                let mut value_pairs = value_pairs.into_inner();
-                while let Ok([key, value]) = value_pairs.next_chunk() {
-                    let key = parse_value(key);
-                    let value = parse_value(value);
-                    map.insert(key.try_into().unwrap(), value);
-                }
+            let mut pairs = pair.into_inner();
+            while let Ok([key, value]) = pairs.next_chunk() {
+                let key = parse_value(key);
+                let value = parse_value(value);
+                map.insert(key.try_into().unwrap(), value);
             }
-
             Value::Map(map)
         }
         Rule::character => Value::Character(unescape_character(&pair.as_str()[1..])),
@@ -85,12 +101,14 @@ fn parse_value(pair: Pair<Rule>) -> Value {
             let tag = tagged.next().unwrap().as_str();
 
             if tag == "uuid" {
-                let val = tagged.next().unwrap().as_str();
-                let uuid = Uuid::parse_str(val.trim_matches('"')).unwrap();
+                let mut val = tagged.next().unwrap().as_str();
+                val = &val[1..val.len() - 1];
+                let uuid = Uuid::parse_str(val).unwrap();
                 Value::Uuid(uuid)
             } else if tag == "inst" {
-                let val = tagged.next().unwrap().as_str();
-                let inst = chrono::DateTime::parse_from_rfc3339(val.trim_matches('"')).unwrap();
+                let mut val = tagged.next().unwrap().as_str();
+                val = &val[1..val.len() - 1];
+                let inst = chrono::DateTime::parse_from_rfc3339(val).unwrap();
                 Value::Instant(inst)
             } else {
                 Value::Tagged(tag.into(), Box::new(parse_value(tagged.next().unwrap())))
@@ -102,7 +120,7 @@ fn parse_value(pair: Pair<Rule>) -> Value {
     }
 }
 
-pub fn parse_edn(input: &str) -> Result<Value, Error<Rule>> {
+pub fn parse_edn(input: &str) -> Result<Value> {
     use pest::Parser;
 
     let edn = EDNParser::parse(Rule::edn, input)?.next().unwrap();

@@ -1,4 +1,9 @@
-#![feature(iter_next_chunk, iter_intersperse)]
+#![feature(
+    iter_next_chunk,
+    iter_intersperse,
+    char_indices_offset,
+    iter_advance_by
+)]
 #![feature(test)]
 
 extern crate test;
@@ -21,7 +26,7 @@ pub use value::to_value;
 mod tests {
     use super::parser::parse_edn;
 
-    const INPUT: &str = include_str!("../data/docs.edn");
+    const INPUT: &str = include_str!("../data/block.edn");
 
     #[test]
     fn test_parse() {

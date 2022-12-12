@@ -7,6 +7,8 @@ pub enum Error {
     Io(#[from] std::io::Error),
     #[error("UTF8 error: {0}")]
     Utf8(#[from] std::str::Utf8Error),
+    #[error(transparent)]
+    Parse(#[from] pest::error::Error<crate::parser::Rule>),
 }
 
 /// Alias for a `Result` with the error type `edn::Error`.
