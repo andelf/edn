@@ -11,8 +11,17 @@ keywords = ["edn", "parser", "generator"]
 categories = ["parsing", "serialization"]
 documentation = "https://docs.rs/edn"
 
+[[bench]]
+name = "parse"
+harness = false
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[[bench]]
+name = "dump"
+harness = false
+
+[[bench]]
+name = "cmp"
+harness = false
 
 [dependencies]
 pest = "2.5.1"
@@ -22,6 +31,9 @@ uuid = "1.2.2"
 ordered-float = "3.4.0"
 serde = { version = "1.0", features = ["derive"] }
 thiserror = "1.0.37"
+
+[dev-dependencies]
+criterion = "0.4"
 
 [features]
 default = []
