@@ -43,7 +43,8 @@ where
 impl std::fmt::Display for Value {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         if f.alternate() {
-            // TODO: impl using writer
+            simple_pprint(f, self, 0)?;
+            return Ok(());
         }
         match self {
             Value::Nil => write!(f, "nil"),
@@ -192,6 +193,65 @@ impl Display for Key {
             Key::Character(c) => write!(f, "\\{}", escape_character(c)),
             Key::Uuid(u) => write!(f, "#uuid \"{}\"", u),
         }
+    }
+}
+
+fn simple_pprint(
+    f: &mut std::fmt::Formatter,
+    value: &Value,
+    indentation: usize,
+) -> std::fmt::Result {
+    f.write_str(&" ".repeat(indentation * 2))?;
+    match value {
+        Value::Nil => writeln!(f, "nil"),
+        Value::Boolean(b) => writeln!(f, "{}", b),
+        Value::Integer(i) => writeln!(f, "{}", i),
+        Value::Float(v) => writeln!(f, "{}", v),
+        Value::String(s) => writeln!(f, "{:?}", s),
+        Value::Symbol(s) => writeln!(f, "{}", s),
+        Value::Keyword(s) => writeln!(f, ":{}", s),
+        Value::Vector(val) => {
+            writeln!(f, "[")?;
+            for (i, v) in val.iter().enumerate() {
+                simple_pprint(f, v, indentation + 1)?;
+            }
+            f.write_str(&" ".repeat(indentation * 2))?;
+            writeln!(f, "]")
+        }
+        Value::List(val) => {
+            writeln!(f, "(")?;
+            for (i, v) in val.iter().enumerate() {
+                simple_pprint(f, v, indentation + 1)?;
+            }
+            f.write_str(&" ".repeat(indentation * 2))?;
+            writeln!(f, ")")
+        }
+        Value::Set(s) => {
+            writeln!(f, "#{{")?;
+            for (i, v) in s.iter().enumerate() {
+                simple_pprint(f, v, indentation + 1)?;
+            }
+            f.write_str(&" ".repeat(indentation * 2))?;
+            writeln!(f, "}}")
+        }
+        Value::Map(m) => {
+            writeln!(f, "{{")?;
+            for (i, (k, v)) in m.iter().enumerate() {
+                f.write_str(&" ".repeat(indentation * 2 + 2))?;
+                writeln!(f, "{}", k)?;
+                simple_pprint(f, v, indentation + 2)?;
+            }
+            f.write_str(&" ".repeat(indentation * 2))?;
+            writeln!(f, "}}")
+        }
+        Value::Instant(i) => writeln!(
+            f,
+            "#inst \"{}\"",
+            i.to_rfc3339_opts(SecondsFormat::Millis, true)
+        ),
+        Value::Uuid(u) => writeln!(f, "#uuid \"{}\"", u),
+        Value::Character(c) => writeln!(f, "\\{}", escape_character(c)),
+        Value::Tagged(t, v) => writeln!(f, "#{} {}", t, v),
     }
 }
 
