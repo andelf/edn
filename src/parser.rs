@@ -82,16 +82,38 @@ fn parse_value(pair: Pair<Rule>) -> Value {
         Rule::string => Value::String(unescape_string(pair.as_str())),
         Rule::symbol => Value::Symbol(pair.as_str().into()),
         Rule::keyword => Value::Keyword(pair.as_str()[1..].into()),
-        Rule::vector => Value::Vector(pair.into_inner().map(parse_value).collect()),
-        Rule::list => Value::List(pair.into_inner().map(parse_value).collect()),
-        Rule::set => Value::Set(pair.into_inner().map(parse_value).collect()),
+        Rule::vector => Value::Vector(
+            pair.into_inner()
+                .filter(|p| p.as_rule() != Rule::discard)
+                .map(parse_value)
+                .collect(),
+        ),
+        Rule::list => Value::List(
+            pair.into_inner()
+                .filter(|p| p.as_rule() != Rule::discard)
+                .map(parse_value)
+                .collect(),
+        ),
+        Rule::set => Value::Set(
+            pair.into_inner()
+                .filter(|p| p.as_rule() != Rule::discard)
+                .map(parse_value)
+                .collect(),
+        ),
         Rule::map => {
             let mut map = Map::new();
             let mut pairs = pair.into_inner();
-            while let Ok([key, value]) = pairs.next_chunk() {
-                let key = parse_value(key);
-                let value = parse_value(value);
-                map.insert(key.try_into().unwrap(), value);
+            match pairs.next_chunk() {
+                Ok([key, value]) => {
+                    let key = parse_value(key);
+                    let value = parse_value(value);
+                    map.insert(key.try_into().unwrap(), value);
+                }
+                Err(it) => {
+                    if it.count() != 0 {
+                        panic!("Invalid map")
+                    }
+                }
             }
             Value::Map(map)
         }

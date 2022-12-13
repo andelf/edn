@@ -6,6 +6,7 @@ edn = _{ SOI ~ value ~ EOI }
 
 value = _{ nil | boolean | string | character | float | integer | keyword | symbol |
           list | vector | map | tagged | set }
+value_or_discard = _{ value | discard }
 
 nil = { "nil" }
 
@@ -22,14 +23,13 @@ non_whitespace = @{ !("\n" | "\r" | " " | "\t") ~ ANY }
 
 symbol = @{ symbol_component ~ ("/" ~ symbol_component)? }
 symbol_component = @ {
-    (symbol_normal_begin ~ symbol_constituent*) |
-    (("-" | "+" | ".") ~ !ASCII_DIGIT ~ symbol_constituent+) |
-    ("-" | "+" | ".") }
+    symbol_normal_begin ~ symbol_constituent* |
+    ("-" | "+" | ".") ~ !ASCII_DIGIT ~ symbol_constituent+ |
+    "-" | "+" | "." }
 symbol_constituent = @{ (ASCII_ALPHANUMERIC | "." | "*" | "+" | "!" | "-" | "_" | "?" | "$" | "%" | "&" | "=" | "<" | ">" | ":" | "#") }
 symbol_normal_begin = @{ ASCII_ALPHA | "*" | "!" | "_" | "?" | "$" | "%" | "&" | "=" | "<" | ">" }
 
 // FIXME: :14d
-// FIXME: :14d/1000
 keyword = @{ ":" ~ symbol_constituent* ~ ("/" ~ symbol_component)? }
 
 integer = @{ ("-" | "+")? ~ int ~ "N"? }
@@ -39,21 +39,25 @@ exp    = @{ ("E" | "e") ~ ("+" | "-")? ~ ASCII_DIGIT+ }
 // FIXME: .233 1.e10
 float = @ { ("-" | "+")? ~ int ~ ("." ~ ASCII_DIGIT+ ~ exp? | exp) ~ "M"? }
 
-list = ${ "(" ~ delim* ~ value_list? ~ delim* ~ ")" }
-value_list = _{ value ~ (delim+ ~ value)* }
+// FIXME: delimeter of ] } )
+value_list = _{ value_or_discard ~ ((delim+ | &"[" | &"{" | &"(") ~ value_or_discard)* }
 
 vector = ${ "[" ~ delim* ~ value_list? ~ delim* ~ "]" }
 
-map = ${ "{" ~ delim* ~ value_pairs? ~ delim* ~ "}" }
-value_pairs = _{ value ~ delim+ ~ value ~ ( delim+ ~ value ~ delim+ ~ value)* }
+list = ${ "(" ~ delim* ~ value_list? ~ delim* ~ ")" }
+
+map = ${ "{" ~ delim* ~ value_list? ~ delim* ~ "}" }
 
 set = ${ "#{" ~ delim* ~ value_list? ~ delim* ~ "}" }
 
-// TODO: discard support
-tagged = ${ "#" ~ &ASCII_ALPHA ~ symbol ~ delim+ ~ value }
+tagged = ${ "#" ~ &ASCII_ALPHA ~ symbol ~ (delim+ | &"[" | &"{" | &"(") ~ value }
 
-// FIXME: | &"[" | &"]" | &"(" | &")" | &"{" | &"}"
-// #js[1,2,3]
+// [1 #_2 3] => [1 3]
+// [1 #_ 2 3] => [1 3]
+// [1 #_ #_ 2 3] => [1]
+// [1 #_#_ 2 3] => [1]
+discard = @{ "#_" ~ (delim* ~ discard)* ~ delim* ~ value }
+
 delim = _{ WHITESPACE | COMMENT }
 
 WHITESPACE = _{ " " | "\t" | "\n" | "\r" | "," }
