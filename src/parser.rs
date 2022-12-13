@@ -103,15 +103,18 @@ fn parse_value(pair: Pair<Rule>) -> Value {
         Rule::map => {
             let mut map = Map::new();
             let mut pairs = pair.into_inner();
-            match pairs.next_chunk() {
-                Ok([key, value]) => {
-                    let key = parse_value(key);
-                    let value = parse_value(value);
-                    map.insert(key.try_into().unwrap(), value);
-                }
-                Err(it) => {
-                    if it.count() != 0 {
-                        panic!("Invalid map")
+            loop {
+                match pairs.next_chunk() {
+                    Ok([key, value]) => {
+                        let key = parse_value(key);
+                        let value = parse_value(value);
+                        map.insert(key.try_into().unwrap(), value);
+                    }
+                    Err(it) => {
+                        if it.count() != 0 {
+                            panic!("Invalid map")
+                        }
+                        break;
                     }
                 }
             }
