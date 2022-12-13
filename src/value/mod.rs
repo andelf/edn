@@ -53,7 +53,7 @@ impl std::fmt::Display for Value {
             Value::Float(v) => write!(f, "{}", v),
             Value::String(s) => write!(f, "{:?}", s),
             Value::Symbol(s) => write!(f, "{}", s),
-            Value::Keyword(s) => write!(f, ":{}", s),
+            Value::Keyword(s) => write!(f, "{}", s),
             Value::Vector(v) => write!(
                 f,
                 "[{}]",
@@ -185,7 +185,7 @@ pub enum Key {
 impl Display for Key {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            Key::Keyword(s) => write!(f, ":{}", s),
+            Key::Keyword(s) => write!(f, "{}", s),
             Key::String(s) => write!(f, "{:?}", s),
             Key::Symbol(s) => write!(f, "{}", s),
             Key::Integer(i) => write!(f, "{}", i),
@@ -209,7 +209,7 @@ fn simple_pprint(
         Value::Float(v) => writeln!(f, "{}", v),
         Value::String(s) => writeln!(f, "{:?}", s),
         Value::Symbol(s) => writeln!(f, "{}", s),
-        Value::Keyword(s) => writeln!(f, ":{}", s),
+        Value::Keyword(s) => writeln!(f, "{}", s),
         Value::Vector(val) => {
             writeln!(f, "[")?;
             for (i, v) in val.iter().enumerate() {
@@ -259,7 +259,7 @@ fn simple_pprint(
 impl<T: AsRef<str>> From<T> for Key {
     fn from(s: T) -> Self {
         if s.as_ref().as_bytes()[0] == b':' {
-            Key::Symbol(s.as_ref()[1..].into())
+            Key::Keyword(s.as_ref().into())
         } else {
             Key::Symbol(s.as_ref().into())
         }

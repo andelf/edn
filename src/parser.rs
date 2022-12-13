@@ -81,7 +81,7 @@ fn parse_value(pair: Pair<Rule>) -> Value {
         Rule::float => Value::Float(pair.as_str().parse().unwrap()),
         Rule::string => Value::String(unescape_string(pair.as_str())),
         Rule::symbol => Value::Symbol(pair.as_str().into()),
-        Rule::keyword => Value::Keyword(pair.as_str()[1..].into()),
+        Rule::keyword => Value::Keyword(pair.as_str().into()),
         Rule::vector => Value::Vector(
             pair.into_inner()
                 .filter(|p| p.as_rule() != Rule::discard)

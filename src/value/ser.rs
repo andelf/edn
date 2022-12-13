@@ -401,7 +401,7 @@ impl serde::Serializer for MapKeySerializer {
 
     fn serialize_str(self, v: &str) -> Result<Self::Ok> {
         if v.starts_with(":") {
-            Ok(Key::Keyword(v[1..].into()))
+            Ok(Key::Keyword(v.into()))
         } else {
             Ok(Key::Symbol(v.into()))
         }
